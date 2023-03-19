@@ -137,6 +137,8 @@ def get_filename_from_content_disposition(header):
 def download_file(url_for_download, output_path):
     with urlopen(url_for_download) as response:
         filename = get_filename_from_content_disposition(response.headers["Content-Disposition"])
+        filename = filename.replace("_split_by_lalalai", "")
+        filename = filename.replace("_no_", "_all_but_", 1)
         file_path = os.path.join(output_path, filename)
         with open(file_path, 'wb') as f:
             while (chunk := response.read(8196)):
