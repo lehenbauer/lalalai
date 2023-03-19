@@ -146,7 +146,7 @@ def download_file(url_for_download, output_path):
     return file_path
 
 
-def batch_process_multiple_stems(license, input_path, output_path, stems, filter_type, splitter):
+def batch_process_multiple_stems(license, input_path, output_path, stems, backing_stems, filter_type, splitter):
     # Upload the file
     print(f'Uploading the file "{input_path}"...')
     file_id = upload_file(file_path=input_path, license=license)
@@ -162,9 +162,10 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, filter
         downloaded_file = download_file(stem_track_url, output_path)
         print(f'The stem track file has been downloaded to "{downloaded_file}"')
 
-        print(f'Downloading the back track file "{back_track_url}"...')
-        downloaded_file = download_file(back_track_url, output_path)
-        print(f'The back track file has been downloaded to "{downloaded_file}"')
+        if stem in backing_stems:
+            print(f'Downloading the back track file "{back_track_url}"...')
+            downloaded_file = download_file(back_track_url, output_path)
+            print(f'The back track file has been downloaded to "{downloaded_file}"')
 
         print(f'The file "{input_path}" has been successfully split for stem "{stem}"')
 
@@ -175,6 +176,7 @@ def main():
     parser.add_argument('--input', type=str, required=True, help='Input directory or a file')
     parser.add_argument('--output', type=str, default=CURRENT_DIR_PATH, help='Output directory')
     parser.add_argument('--stems', nargs='+', default=['vocals'], help="List of stems to extract...  stems can be 'vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind'")
+    parser.add_argument('--backingstems', nargs='+', default=['vocals'], help="List of all-but-stems (backing tracks without stem) to extract...")
     parser.add_argument('--filter', type=int, default=1, choices=[0, 1, 2], help='0 (mild), 1 (normal), 2 (aggressive)')
     parser.add_argument('--splitter', type=str, default='phoenix', choices=['phoenix', 'cassiopeia'], help='The type of neural network used to split audio')
 
@@ -182,7 +184,7 @@ def main():
 
     os.makedirs(args.output, exist_ok=True)
 
-    batch_process_multiple_stems(args.license, args.input, args.output, args.stems, args.filter, args.splitter)
+    batch_process_multiple_stems(args.license, args.input, args.output, args.stems, args.backingstems, args.filter, args.splitter)
 
 if __name__ == '__main__':
     try:
