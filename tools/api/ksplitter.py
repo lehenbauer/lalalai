@@ -34,6 +34,7 @@ from urllib.request import urlopen, Request
 CURRENT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 URL_API = "https://www.lalal.ai/api/"
 
+stem_types = ['vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind']
 
 def update_percent(pct):
     pct = str(pct)
@@ -145,8 +146,16 @@ def download_file(url_for_download, output_path):
                 f.write(chunk)
     return file_path
 
+def batch_process_multiple_stems(license, input_path, output_path, stems, backing_tracks, filter_type, splitter):
+    # Validate stems and backing_tracks
+    for stem in stems:
+        if stem not in stem_types:
+            raise ValueError(f"Unrecognized stem: {stem}")
 
-def batch_process_multiple_stems(license, input_path, output_path, stems, backing_stems, filter_type, splitter):
+    for track in backing_tracks:
+        if track not in stem_types:
+            raise ValueError(f"Unrecognized backing track: {track}")
+
     # Upload the file
     print(f'Uploading the file "{input_path}"...')
     file_id = upload_file(file_path=input_path, license=license)
@@ -162,13 +171,12 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
         downloaded_file = download_file(stem_track_url, output_path)
         print(f'The stem track file has been downloaded to "{downloaded_file}"')
 
-        if stem in backing_stems:
+        if stem in backing_tracks:
             print(f'Downloading the back track file "{back_track_url}"...')
             downloaded_file = download_file(back_track_url, output_path)
             print(f'The back track file has been downloaded to "{downloaded_file}"')
 
         print(f'The file "{input_path}" has been successfully split for stem "{stem}"')
-
 
 def main():
     parser = ArgumentParser(description='Lalalai splitter')
