@@ -12,4 +12,6 @@ python3 ksplitter.py --license xxxxxxxxxxxxxxxx --input /Users/karl/Music/Logic/
 
 In the above command we extract from the specified input file to the specified output directory, the list of stems specificied and the optional list of backing tracks.
 
+python TK
+
 

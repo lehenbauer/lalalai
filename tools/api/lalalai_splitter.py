@@ -210,10 +210,20 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
     print(f'The file "{input_path}" has been successfully uploaded (file id: {file_id})')
 
     # Split the file for each stem
-    for stem in stems:
+    requested = dict()
+    for i in range(len(stems)):
+        stem = stems[i]
         print(f'Processing the file "{input_path}" for stem "{stem}"...')
-        split_file(file_id, license, stem, filter_type, splitter)
+        if stem not in requested:
+            split_file(file_id, license, stem, filter_type, splitter)
+
         stem_track_url, back_track_url = check_file(file_id)
+
+        if i + 1 < len(stems):
+            next_stem = stems[i + 1]
+            print(f'Early start request of next stem extraction "{next_stem}"...')
+            split_file(file_id, license, next_stem, filter_type, splitter)
+            requested[next_stem] = True
 
         print(f'Downloading the stem track file "{stem_track_url}"...')
         downloaded_file = download_file(stem_track_url, output_path)
@@ -240,7 +250,7 @@ def main():
 
     os.makedirs(args.output, exist_ok=True)
 
-    batch_process_multiple_stems(args.license, args.input, args.output, args.stems, args.backingstems, args.filter, args.splitter)
+    batch_process_multiple_stems(args.license, args.input, args.output, args.stems, args.backingtracks, args.filter, args.splitter)
 
 if __name__ == '__main__':
     try:
