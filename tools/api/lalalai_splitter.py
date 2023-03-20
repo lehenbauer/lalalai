@@ -118,7 +118,7 @@ def split_file(file_id, license, stem, filter_type, splitter):
 
 
 def check_file(file_id):
-      """
+    """
     Checks the status of a file submitted for stem separation by the
     Lalal.ai API.  Polls the API for updates until processing is complete,
     periodically printing progress.
