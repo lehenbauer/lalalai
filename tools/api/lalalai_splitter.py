@@ -45,6 +45,15 @@ def update_percent(pct):
     sys.stdout.write(pct)
     sys.stdout.flush()
 
+def validate_stems(stems):
+    """
+    Validates the list of stems and returns the name of any stem that is not recognized,
+    else None if all stems are valid.
+    """
+    for stem in stems:
+        if stem not in stem_types:
+            return stem
+    return None
 
 def make_content_disposition(filename, disposition='attachment'):
     try:
@@ -146,13 +155,13 @@ def download_file(url_for_download, output_path):
 
 def batch_process_multiple_stems(license, input_path, output_path, stems, backing_tracks, filter_type, splitter):
     # Validate stems and backing_tracks
-    for stem in stems:
-        if stem not in stem_types:
-            raise ValueError(f"Unrecognized stem: {stem}")
+    invalid_stem = validate_stems(stems)
+    if invalid_stem:
+        raise ValueError(f"Unrecognized stem: {invalid_stem}")
 
-    for track in backing_tracks:
-        if track not in stem_types:
-            raise ValueError(f"Unrecognized backing track: {track}")
+    invalid_track = validate_stems(backing_tracks)
+    if invalid_track:
+        raise ValueError(f"Unrecognized backing track: {invalid_track}")
 
     # Upload the file
     print(f'Uploading the file "{input_path}"...')
