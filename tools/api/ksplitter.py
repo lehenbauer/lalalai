@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 # Copyright (c) 2021 LALAL.AI
+# Copyright (c) 2023 Karl Lehenbauer
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +22,9 @@
 # SOFTWARE.
 
 
-import cgi
 import json
 import os
+import re
 import sys
 import time
 from argparse import ArgumentParser
@@ -121,25 +122,22 @@ def check_file(file_id):
 
         time.sleep(15)
 
-
 def get_filename_from_content_disposition(header):
-    _, params = cgi.parse_header(header)
-    filename = params.get('filename')
-    if filename:
-        return filename
-    filename = params.get('filename*')
-    if filename:
-        encoding, quoted = filename.split("''")
-        unquoted = unquote(quoted, encoding)
-        return unquoted
-    raise ValueError('Invalid header Content-Disposition')
-
+    """
+    Extracts the filename from a Content-Disposition header.
+    """
+    match = re.search(r'filename[^;=\n]*=[\'"]?([^;\'"\n]*)[\'"]?', header)
+    if match:
+        return match.group(1)
+    else:
+        raise ValueError('Invalid header Content-Disposition')
 
 def download_file(url_for_download, output_path):
     with urlopen(url_for_download) as response:
         filename = get_filename_from_content_disposition(response.headers["Content-Disposition"])
         filename = filename.replace("_split_by_lalalai", "")
         filename = filename.replace("_no_", "_all_but_", 1)
+        filename = filename.replace(".aiff", ".aif", 1)
         file_path = os.path.join(output_path, filename)
         with open(file_path, 'wb') as f:
             while (chunk := response.read(8196)):
