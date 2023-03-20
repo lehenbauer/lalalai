@@ -182,7 +182,7 @@ def main():
     parser.add_argument('--input', type=str, required=True, help='Input directory or a file')
     parser.add_argument('--output', type=str, default=CURRENT_DIR_PATH, help='Output directory')
     parser.add_argument('--stems', nargs='+', default=['vocals'], help="List of stems to extract...  stems can be 'vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind'")
-    parser.add_argument('--backingstems', nargs='+', default=['vocals'], help="List of all-but-stems (backing tracks without stem) to extract...")
+    parser.add_argument('--backingtracks', nargs='+', default=['vocals'], help="List of all-but-stems (backing tracks without stem) to extract...")
     parser.add_argument('--filter', type=int, default=1, choices=[0, 1, 2], help='0 (mild), 1 (normal), 2 (aggressive)')
     parser.add_argument('--splitter', type=str, default='phoenix', choices=['phoenix', 'cassiopeia'], help='The type of neural network used to split audio')
 
