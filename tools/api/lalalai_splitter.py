@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 # Copyright (c) 2021 LALAL.AI
+# Copyright (c) 2023 Karl Lehenbauer
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +22,9 @@
 # SOFTWARE.
 
 
-import cgi
 import json
 import os
+import re
 import sys
 import time
 from argparse import ArgumentParser
@@ -34,6 +35,7 @@ from urllib.request import urlopen, Request
 CURRENT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 URL_API = "https://www.lalal.ai/api/"
 
+stem_types = ['vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind']
 
 def update_percent(pct):
     pct = str(pct)
@@ -120,37 +122,46 @@ def check_file(file_id):
 
         time.sleep(15)
 
-
 def get_filename_from_content_disposition(header):
-    _, params = cgi.parse_header(header)
-    filename = params.get('filename')
-    if filename:
-        return filename
-    filename = params.get('filename*')
-    if filename:
-        encoding, quoted = filename.split("''")
-        unquoted = unquote(quoted, encoding)
-        return unquoted
-    raise ValueError('Invalid header Content-Disposition')
-
+    """
+    Extracts the filename from a Content-Disposition header.
+    """
+    match = re.search(r'filename[^;=\n]*=[\'"]?([^;\'"\n]*)[\'"]?', header)
+    if match:
+        return match.group(1)
+    else:
+        raise ValueError('Invalid header Content-Disposition')
 
 def download_file(url_for_download, output_path):
     with urlopen(url_for_download) as response:
         filename = get_filename_from_content_disposition(response.headers["Content-Disposition"])
+        filename = filename.replace("_split_by_lalalai", "")
+        filename = filename.replace("_no_", "_all_but_", 1)
+        filename = filename.replace(".aiff", ".aif", 1)
         file_path = os.path.join(output_path, filename)
         with open(file_path, 'wb') as f:
             while (chunk := response.read(8196)):
                 f.write(chunk)
     return file_path
 
+def batch_process_multiple_stems(license, input_path, output_path, stems, backing_tracks, filter_type, splitter):
+    # Validate stems and backing_tracks
+    for stem in stems:
+        if stem not in stem_types:
+            raise ValueError(f"Unrecognized stem: {stem}")
 
-def batch_process_for_file(license, input_path, output_path, stem, filter_type, splitter):
-    try:
-        print(f'Uploading the file "{input_path}"...')
-        file_id = upload_file(file_path=input_path, license=license)
-        print(f'The file "{input_path}" has been successfully uploaded (file id: {file_id})')
+    for track in backing_tracks:
+        if track not in stem_types:
+            raise ValueError(f"Unrecognized backing track: {track}")
 
-        print(f'Processing the file "{input_path}"...')
+    # Upload the file
+    print(f'Uploading the file "{input_path}"...')
+    file_id = upload_file(file_path=input_path, license=license)
+    print(f'The file "{input_path}" has been successfully uploaded (file id: {file_id})')
+
+    # Split the file for each stem
+    for stem in stems:
+        print(f'Processing the file "{input_path}" for stem "{stem}"...')
         split_file(file_id, license, stem, filter_type, splitter)
         stem_track_url, back_track_url = check_file(file_id)
 
@@ -158,42 +169,32 @@ def batch_process_for_file(license, input_path, output_path, stem, filter_type, 
         downloaded_file = download_file(stem_track_url, output_path)
         print(f'The stem track file has been downloaded to "{downloaded_file}"')
 
-        print(f'Downloading the back track file "{back_track_url}"...')
-        downloaded_file = download_file(back_track_url, output_path)
-        print(f'The back track file has been downloaded to "{downloaded_file}"')
+        if stem in backing_tracks:
+            print(f'Downloading the back track file "{back_track_url}"...')
+            downloaded_file = download_file(back_track_url, output_path)
+            print(f'The back track file has been downloaded to "{downloaded_file}"')
 
-        print(f'The file "{input_path}" has been successfully split')
-    except Exception as err:
-        print(f'Cannot process the file "{input_path}": {err}')
-
-
-def batch_process(license, input_path, output_path, stem, filter_type, splitter):
-    if os.path.isfile(input_path):
-        batch_process_for_file(license, input_path, output_path, stem, filter_type, splitter)
-    else:
-        for path in os.listdir(input_path):
-            path = os.path.join(input_path, path)
-            if os.path.isfile(path):
-                batch_process_for_file(license, path, output_path, stem, filter_type, splitter)
-
+        print(f'The file "{input_path}" has been successfully split for stem "{stem}"')
 
 def main():
     parser = ArgumentParser(description='Lalalai splitter')
     parser.add_argument('--license', type=str, required=True, help='License key')
     parser.add_argument('--input', type=str, required=True, help='Input directory or a file')
     parser.add_argument('--output', type=str, default=CURRENT_DIR_PATH, help='Output directory')
-    parser.add_argument('--stem', type=str, default='vocals', choices=['vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind'], help='Stem option. Stems "voice", "strings", "wind" are not supported by Cassiopeia')
+    parser.add_argument('--stems', nargs='+', default=['vocals'], help="List of stems to extract...  stems can be 'vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind'")
+    parser.add_argument('--backingstems', nargs='+', default=['vocals'], help="List of all-but-stems (backing tracks without stem) to extract...")
     parser.add_argument('--filter', type=int, default=1, choices=[0, 1, 2], help='0 (mild), 1 (normal), 2 (aggressive)')
     parser.add_argument('--splitter', type=str, default='phoenix', choices=['phoenix', 'cassiopeia'], help='The type of neural network used to split audio')
 
     args = parser.parse_args()
 
     os.makedirs(args.output, exist_ok=True)
-    batch_process(args.license, args.input, args.output, args.stem, args.filter, args.splitter)
 
+    batch_process_multiple_stems(args.license, args.input, args.output, args.stems, args.backingstems, args.filter, args.splitter)
 
 if __name__ == '__main__':
     try:
         main()
     except Exception as err:
         print(err)
+
