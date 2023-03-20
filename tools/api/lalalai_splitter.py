@@ -2,17 +2,17 @@
 
 # Copyright (c) 2021 LALAL.AI
 # Copyright (c) 2023 Karl Lehenbauer
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,6 +38,10 @@ URL_API = "https://www.lalal.ai/api/"
 stem_types = ['vocals', 'drum', 'bass', 'piano', 'electric_guitar', 'acoustic_guitar', 'synthesizer', 'voice', 'strings', 'wind']
 
 def update_percent(pct):
+    """
+    Updates the console display to show a percentage value, overwriting
+    the previous value.
+    """
     pct = str(pct)
     sys.stdout.write("\b" * len(pct))
     sys.stdout.write(" " * len(pct))
@@ -47,8 +51,8 @@ def update_percent(pct):
 
 def validate_stems(stems):
     """
-    Validates the list of stems and returns the name of any stem that is not recognized,
-    else None if all stems are valid.
+    Validates the list of stems and returns the name of any stem that is
+    not recognized, else None if all stems are valid.
     """
     for stem in stems:
         if stem not in stem_types:
@@ -56,6 +60,10 @@ def validate_stems(stems):
     return None
 
 def make_content_disposition(filename, disposition='attachment'):
+    """
+    Generates a Content-Disposition header for a given filename, with
+    the specified disposition type.
+    """
     try:
         filename.encode('ascii')
         file_expr = f'filename="{filename}"'
@@ -66,6 +74,10 @@ def make_content_disposition(filename, disposition='attachment'):
 
 
 def upload_file(file_path, license):
+    """
+    Uploads a file to the Lalal.ai API and returns the file ID on success.
+    Raises a `RuntimeError` with the API error message on failure.
+    """
     url_for_upload = URL_API + "upload/"
     _, filename = os.path.split(file_path)
     headers = {
@@ -83,6 +95,15 @@ def upload_file(file_path, license):
 
 
 def split_file(file_id, license, stem, filter_type, splitter):
+    """
+    Submits a file with the specified `file_id` to the Lalal.ai API for stem
+    separation.  The `stem` parameter specifies the stem to extract, and the
+    `filter_type` parameter specifies the strength of the filtering to apply.
+    The `splitter` parameter specifies the type of neural network to use
+    for the separation.
+
+    Raises a `RuntimeError` with the API error message on failure.
+    """
     url_for_split = URL_API + "split/"
     headers = {
         "Authorization": f"license {license}",
@@ -97,6 +118,14 @@ def split_file(file_id, license, stem, filter_type, splitter):
 
 
 def check_file(file_id):
+      """
+    Checks the status of a file submitted for stem separation by the
+    Lalal.ai API.  Polls the API for updates until processing is complete,
+    periodically printing progress.
+
+    Returns URLs for extracted stem and backing tracks (if any) on success.
+    Raises a `RuntimeError` with API error message on processing error.
+    """
     url_for_check = URL_API + "check/?"
     query_args = {'id': file_id}
     encoded_args = urlencode(query_args)
@@ -154,6 +183,18 @@ def download_file(url_for_download, output_path):
     return file_path
 
 def batch_process_multiple_stems(license, input_path, output_path, stems, backing_tracks, filter_type, splitter):
+    """
+    Processes an audio file specified by `input_path` and splits it into
+    multiple stems using the Lalal.ai API.  The stems to be extracted are
+    specified by the `stems` list, and any backing tracks (a version of the
+    song that contains everything but the stem)) are specified by the
+    `backing_tracks` list. The API splits the audio using the neural network
+    specified by `splitter`, and applies a filter of mild, normal, or
+    aggressive strength as specified by `filter_type`.
+
+    The resulting stem tracks and backing tracks (if specified) are
+    downloaded to the `output_path` directory.
+    """
     # Validate stems and backing_tracks
     invalid_stem = validate_stems(stems)
     if invalid_stem:
