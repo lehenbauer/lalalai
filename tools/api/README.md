@@ -2,13 +2,15 @@
 
 lalalai_splitter.py is an example of interacting with the LALAL.AI API as described in [https://www.lalal.ai/api/help/](https://www.lalal.ai/api/help/)
 
+By specifying a list of stems and optional backing tracks to be extracted, the program will upload the file once and then process the stems one at a time without reuploading.
+
 ## Usage
 
 ```bash
 % python3 lalalai_splitter.py --input <input directory or a file> \
                       --license <user license> \
                       --output <output directory> \
-                      --stem <stem option> \
+                      --stem <list of stems> \
                             default: 'vocals'
                             choices: 
                                 ['vocals', 'drum', 'bass',
@@ -18,6 +20,8 @@ lalalai_splitter.py is an example of interacting with the LALAL.AI API as descri
                             Stem option:
                             vocals, drum, bass, voice, electric_guitar, acoustic_guitar, synthesizer, strings, wind.
                             Stems voice, strings, wind are not supported by Cassiopeia
+                      --backingtracks <list of stem types> \
+                            default: 'vocals'
                       --filter <post-processing filter> \
                             default: 1
                             choices:
