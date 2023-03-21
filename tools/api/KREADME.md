@@ -14,4 +14,6 @@ In the above command we extract from the specified input file to the specified o
 
 python TK
 
+brew install python-tk@3.11
+
 

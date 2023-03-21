@@ -210,11 +210,10 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
     print(f'The file "{input_path}" has been successfully uploaded (file id: {file_id})')
 
     # Split the file for each stem
-    requested = dict()
     for i in range(len(stems)):
         stem = stems[i]
         print(f'Processing the file "{input_path}" for stem "{stem}"...')
-        if stem not in requested:
+        if i == 0:
             split_file(file_id, license, stem, filter_type, splitter)
 
         stem_track_url, back_track_url = check_file(file_id)
@@ -223,7 +222,6 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
             next_stem = stems[i + 1]
             print(f'Early start request of next stem extraction "{next_stem}"...')
             split_file(file_id, license, next_stem, filter_type, splitter)
-            requested[next_stem] = True
 
         print(f'Downloading the stem track file "{stem_track_url}"...')
         downloaded_file = download_file(stem_track_url, output_path)
