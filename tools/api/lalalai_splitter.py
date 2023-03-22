@@ -207,12 +207,12 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
     # Upload the file
     print(f'Uploading the file "{input_path}"...')
     file_id = upload_file(file_path=input_path, license=license)
-    print(f'The file "{input_path}" has been successfully uploaded (file id: {file_id})')
+    print(f'The file has been successfully uploaded (file id: {file_id})')
 
     # Split the file for each stem
     for i in range(len(stems)):
         stem = stems[i]
-        print(f'Processing the file "{input_path}" for stem "{stem}"...')
+        print(f'Processing the file for stem "{stem}"...')
         if i == 0:
             split_file(file_id, license, stem, filter_type, splitter)
 
@@ -220,7 +220,7 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
 
         if i + 1 < len(stems):
             next_stem = stems[i + 1]
-            print(f'Early start request of next stem extraction "{next_stem}"...')
+            print(f'Early start processing of next stem extraction "{next_stem}"...')
             split_file(file_id, license, next_stem, filter_type, splitter)
 
         print(f'Downloading the stem track file "{stem_track_url}"...')
@@ -232,7 +232,7 @@ def batch_process_multiple_stems(license, input_path, output_path, stems, backin
             downloaded_file = download_file(back_track_url, output_path)
             print(f'The back track file has been downloaded to "{downloaded_file}"')
 
-        print(f'The file "{input_path}" has been successfully split for stem "{stem}"')
+        print(f'The file has been successfully split for stem "{stem}"')
 
 def main():
     parser = ArgumentParser(description='Lalalai splitter')
